@@ -1,4 +1,7 @@
 import React from 'react';
+import axios from 'axios';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
 import Input from '@/components/Input';
 
@@ -8,9 +11,39 @@ const Auth = () => {
     const [password, setPassword] = React.useState("");
     const [variant, setVariant] = React.useState('login');
 
+    const router = useRouter();
+
     const toggleVariant = React.useCallback(() => {
         setVariant((currentVariant) => currentVariant === 'login' ? 'register' : 'login')
     }, []);
+
+    const loginHandler = React.useCallback( async() => {
+        try {
+            await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+                callbackUrl: '/'
+            });
+
+            router.push('/')
+        } catch (error) {
+            console.log(error)
+        }
+    }, [email, password, router])
+
+    const registerHandler = React.useCallback( async() => {
+        try {
+            await axios.post(`/api/register`, {
+                email,
+                name: username,
+                password
+            });
+            loginHandler();
+        } catch (error) {
+            console.log(error)
+        }
+    }, [,email, username, password, loginHandler]);
 
   return (
     <div className="relative w-full h-full bg-[url('/images/hero.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
@@ -48,7 +81,7 @@ const Auth = () => {
                             value={password}
                         />
                     </div>
-                    <button className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
+                    <button onClick={variant === 'login' ? loginHandler : registerHandler} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
                     {variant === 'login' ? "Login" : "Sign Up"}
                     </button>
                     <p className='text-neutral-500 mt-12'>
